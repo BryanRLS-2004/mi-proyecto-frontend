@@ -260,7 +260,7 @@ const Promociones = () => {
     // Si es URL absoluta o viene de los assets del frontend
     if (url.startsWith('http') || url.startsWith('/assets/')) return url;
     // Si es imagen subida al backend
-    return `http://localhost:8080${url}`;
+    return `https://mi-proyecto-backend-relaxtotal.onrender.com${url}`;
 };
 
 
@@ -305,7 +305,7 @@ const Promociones = () => {
 
                         {promocion.imagen_url && (
                             <div className="promocion-image">
-                                <img src={`http://localhost:8080${promocion.imagen_url}`} alt={promocion.nombre} />
+                                <img src={`https://mi-proyecto-backend-relaxtotal.onrender.com${promocion.imagen_url}`} alt={promocion.nombre} />
                             </div>
                         )}
 

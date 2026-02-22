@@ -2,7 +2,7 @@
 // src/services/businessConfigService.js
 import axios from "axios";
 
-const API_URL = "http://localhost:8080"; // ⬅️ BACKEND, no 3000
+const API_URL = "https://mi-proyecto-backend-relaxtotal.onrender.com"; // ⬅️ BACKEND, no 3000
 
 // Recuperar el JWT del localStorage (ajusta la clave si usas otra)
 const getToken = () => localStorage.getItem("token");

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080'; 
+const API_URL = 'https://mi-proyecto-backend-relaxtotal.onrender.com'; 
 
 const getToken = () => localStorage.getItem('token');
 

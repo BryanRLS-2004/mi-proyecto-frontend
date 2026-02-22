@@ -34,7 +34,7 @@ const Services = () => {
   useEffect(() => {
     const fetchAndMergeServices = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/services');
+        const response = await axios.get('https://mi-proyecto-backend-relaxtotal.onrender.com/services');
         const backendServices = response.data;
         const transformedServices = backendServices.map(service => ({
           id: service.id,

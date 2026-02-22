@@ -166,7 +166,7 @@ const Reservation = () => {
         return;
       }
 
-      const res = await fetch(`http://localhost:8080/user/worker/${workerId}/availability/date/${date}?durationMinutes=${duration}`);
+      const res = await fetch(`https://mi-proyecto-backend-relaxtotal.onrender.com/user/worker/${workerId}/availability/date/${date}?durationMinutes=${duration}`);
       if (!res.ok) {
         const txt = await res.text().catch(()=>null);
         console.error("Backend returned not ok:", res.status, txt);
