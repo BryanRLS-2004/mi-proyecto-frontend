@@ -1,70 +1,102 @@
-# Getting Started with Create React App
+# Proyecto Centro de Masajes – Despliegue
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Descripción
 
-## Available Scripts
+Este proyecto corresponde a la aplicación **Centro de Masajes**, que permite gestionar reservas, clientes y servicios.
 
-In the project directory, you can run:
+* **Backend:** Spring Boot
+* **Frontend:** React
+* **Base de datos:** MySQL en Amazon RDS
+* **Despliegue:** Backend en Render, Frontend en Netlify
 
-### `npm start`
+## Prerrequisitos
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+* Cuenta en **AWS** con RDS.
+* Cuenta en **Render** para backend.
+* Cuenta en **Netlify** para frontend.
+* Docker (opcional, para pruebas locales).
+* MySQL Workbench (para importar la base de datos).
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 1️ Base de datos (RDS)
 
-### `npm test`
+1. Crear una instancia MySQL en AWS RDS.
+2. Configurar usuario, contraseña y acceso público (Security Group).
+3. Importar la base de datos desde el dump local `bdrelaxtotal.sql`:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**Opción Workbench:**
 
-### `npm run build`
+* Conectar Workbench al RDS.
+* Server → Data Import → Import from Self-Contained File → seleccionar `bdrelaxtotal.sql` → Start Import.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+**Opción terminal:**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+mysql -h <endpoint_RDS> -P 3306 -u <usuario> -p < bdrelaxtotal.sql
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+4. Verificar la creación:
 
-### `npm run eject`
+```sql
+SHOW DATABASES;
+USE centro_masajes;
+SHOW TABLES;
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 2️ Backend (Spring Boot en Render)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Dockerfile utilizado:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```dockerfile
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+WORKDIR /app
+COPY . .
+RUN mvn clean package -DskipTests
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","app.jar"]
+```
 
-## Learn More
+### Despliegue en Render:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Crear un nuevo **Web Service** en Render.
+2. Conectar el repositorio Git del backend.
+3. Configurar **Environment Variables**:
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+   * `SPRING_DATASOURCE_URL=jdbc:mysql://<endpoint_RDS>:3306/centro_masajes`
+   * `SPRING_DATASOURCE_USERNAME=<usuario_RDS>`
+   * `SPRING_DATASOURCE_PASSWORD=<contraseña_RDS>`
+   * `PORT` (Render asigna automáticamente).
+4. Render asigna un **puerto interno** (ej: 10000). La app debe leerlo:
 
-### Code Splitting
+```properties
+server.port=${PORT:8080}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+5. Hacer **Manual Deploy / Restart** si la app estaba corriendo antes de la DB.
 
-### Analyzing the Bundle Size
+## 3 Frontend (React en Netlify)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+1. Crear un sitio en Netlify y conectar el repositorio del frontend.
+2. Configurar la **URL del backend** en los servicios de la app:
 
-### Making a Progressive Web App
+```js
+const BASE_URL = "https://mi-backend.onrender.com";
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+3. Deploy automático o manual desde Netlify.
+4. El frontend no requiere puerto; Netlify sirve la app en su URL pública.
 
-### Advanced Configuration
+## 4 Pruebas
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. Acceder al frontend en Netlify.
+2. Probar funcionalidades de login y reservas.
+3. Verificar logs del backend en Render para asegurar conexión con RDS.
 
-### Deployment
+## 5 Notas importantes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+* Render maneja puertos internos dinámicos, no modificar `EXPOSE` en el Dockerfile afecta solo pruebas locales.
+* AWS RDS no elimina instancias por inactividad; si la DB desaparece, normalmente fue eliminada manualmente.
+* Para futuras copias de seguridad, exportar la base de datos y mantener snapshots en RDS.
